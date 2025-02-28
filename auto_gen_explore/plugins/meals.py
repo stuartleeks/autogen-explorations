@@ -2,7 +2,6 @@ import datetime
 import logging
 from dataclasses import dataclass
 from typing import Annotated
-from semantic_kernel.functions import kernel_function
 
 _logger = logging.getLogger(__name__)
 
@@ -88,10 +87,6 @@ class MealsPlugin:
     # Dishes
     #
 
-    @kernel_function(
-        name="get_dish_options",
-        description="Gets a list of dishes to choose from, including their cooking time",
-    )
     def get_dish_options(
         self,
     ) -> dict:
@@ -103,10 +98,6 @@ class MealsPlugin:
     # Meals
     #
 
-    @kernel_function(
-        name="add_dish",
-        description="Adds a dish to the list of dishes to cook",
-    )
     def add_meal(
         self,
         name: str,
@@ -123,7 +114,7 @@ class MealsPlugin:
                 else:
                     return f"Dish {name} cannot cooked from frozen."
             else:
-                if self.dish_instructions[name].steps:
+                if self.dish_instructions[lower_name].steps:
                     self.dishes.append(Dish(name=name, frozen=False))
                     return f"Dish {name} added."
                 else:
@@ -131,10 +122,6 @@ class MealsPlugin:
         else:
             return f"Dish {name} not found."
 
-    @kernel_function(
-        name="remove_dish",
-        description="Removes a dish from the list of dishes to cook",
-    )
     def remove_dish(
         self,
         name: str,
@@ -147,10 +134,6 @@ class MealsPlugin:
                 return f"Dish {name} removed."
         return f"Dish {name} not found."
 
-    @kernel_function(
-        name="get_dishes",
-        description="Gets the list of dishes to cook",
-    )
     def get_dishes(
         self,
     ) -> list[Dish]:
@@ -158,17 +141,14 @@ class MealsPlugin:
         _logger.debug(f"get_dishes: {self.dishes}")
         return self.dishes
 
-    @kernel_function(
-        name="get_meal_steps",
-        description="Gets the instructions for the meal listing the steps for all the dishes to be ready for the desired time",
-    )
     def get_meal_steps(
         self,
     ) -> list[PreparationStep]:
         """Gets the instructions for the meal listing the steps for all the dishes to be ready for the desired time"""
         _logger.debug(f"get_meal steps - starting...")
         if not self.time_to_be_ready:
-            raise ValueError("Time to be ready not set.")
+            # raise ValueError("Time to be ready not set.")
+            return "Time to be ready not set."
 
         preparation_steps = []
         for dish in self.dishes:
@@ -216,10 +196,6 @@ class MealsPlugin:
     #     self.time_to_be_ready = time
     #     return f"Time to be ready set to {time}."
 
-    @kernel_function(
-        name="set_time_to_be_ready",
-        description="Sets the time by which the meal should be ready",
-    )
     def set_time_to_be_ready(
         self,
         time: str | datetime.datetime,
@@ -248,10 +224,6 @@ class MealsPlugin:
         self.time_to_be_ready = time
         return f"Time to be ready set to {time}."
 
-    @kernel_function(
-        name="get_time_to_be_ready",
-        description="Gets the time by which the meal should be ready",
-    )
     def get_time_to_be_ready(
         self,
     ) -> datetime.datetime:

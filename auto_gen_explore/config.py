@@ -37,7 +37,7 @@ def semantic_kernel_log_level():
     return os.getenv("SEMANTIC_KERNEL_LOG_LEVEL", "CRITICAL")
 
 def agent_log_level():
-    return os.getenv("AGENT_LOG_LEVEL", "INFO")
+    return os.getenv("AGENT_LOG_LEVEL", "DEBUG")
 
 def _get_required_env(env_var):
     value = os.getenv(env_var)

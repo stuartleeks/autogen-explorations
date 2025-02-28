@@ -29,14 +29,23 @@ from autogen_core.models import (AssistantMessage, ChatCompletionClient,
                                  FunctionExecutionResultMessage, LLMMessage,
                                  SystemMessage, UserMessage)
 
-# Set the logging level for  semantic_kernel.kernel to DEBUG.
+##https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
+grey = '\x1b[38;5;8m'
+yellow = '\x1b[38;5;226m'
+dark_yellow = '\x1b[38;5;214m'
+reset = '\x1b[0m'
+
+
 logging.basicConfig(
-    format="[%(asctime)s - %(name)s:%(lineno)d - %(levelname)s] %(message)s",
+    # format="[%(asctime)s - %(name)s:%(lineno)d - %(levelname)s] %(message)s",
+    format=f"{grey}%(message)s{reset}",
     datefmt="%Y-%m-%d %H:%M:%S",
     # level=logging.DEBUG
 )
+
 # logging.getLogger("httpx").setLevel(logging.INFO) # useful to see the URLs used (e.g. when debugging a 404 for AOAI)
 logging.getLogger("kernel").setLevel(config.semantic_kernel_log_level())
+logging.getLogger("AIAgent").setLevel(config.agent_log_level())
 
 # Create the token provider
 token_provider = get_bearer_token_provider(
@@ -83,6 +92,7 @@ class AIAgent(RoutedAgent):
         user_topic_type: str,
     ) -> None:
         super().__init__(description)
+        self._logger = logging.getLogger(self.__class__.__name__)
         self._system_message = system_message
         self._model_client = model_client
         self._tools = dict([(tool.name, tool) for tool in tools])
@@ -101,7 +111,7 @@ class AIAgent(RoutedAgent):
             tools=self._tool_schema + self._delegate_tool_schema,
             cancellation_token=ctx.cancellation_token,
         )
-        print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
+        self._logger.debug(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}")
         # Process the LLM result.
         while isinstance(llm_result.content, list) and all(isinstance(m, FunctionCall) for m in llm_result.content):
             tool_call_results: List[FunctionExecutionResult] = []
@@ -143,11 +153,11 @@ class AIAgent(RoutedAgent):
             if len(delegate_targets) > 0:
                 # Delegate the task to other agents by publishing messages to the corresponding topics.
                 for topic_type, task in delegate_targets:
-                    print(
-                        f"{'-'*80}\n{self.id.type}:\nDelegating to {topic_type}", flush=True)
+                    self._logger.debug(
+                        f"{'-'*80}\n{self.id.type}:\nDelegating to {topic_type}")
                     await self.publish_message(task, topic_id=TopicId(topic_type, source=self.id.key))
             if len(tool_call_results) > 0:
-                print(f"{'-'*80}\n{self.id.type}:\n{tool_call_results}", flush=True)
+                self._logger.debug(f"{'-'*80}\n{self.id.type}:\n{tool_call_results}")
                 # Make another LLM call with the results.
                 message.context.extend(
                     [
@@ -162,7 +172,7 @@ class AIAgent(RoutedAgent):
                     tools=self._tool_schema + self._delegate_tool_schema,
                     cancellation_token=ctx.cancellation_token,
                 )
-                print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
+                self._logger.debug(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}")
             else:
                 # The task has been delegated, so we are done.
                 return
@@ -170,25 +180,6 @@ class AIAgent(RoutedAgent):
         assert isinstance(llm_result.content, str)
         message.context.append(AssistantMessage(
             content=llm_result.content, source=self.id.type))
-        await self.publish_message(
-            AgentResponse(context=message.context,
-                          reply_to_topic_type=self._agent_topic_type),
-            topic_id=TopicId(self._user_topic_type, source=self.id.key),
-        )
-
-
-class HumanAgent(RoutedAgent):
-    def __init__(self, description: str, agent_topic_type: str, user_topic_type: str) -> None:
-        super().__init__(description)
-        self._agent_topic_type = agent_topic_type
-        self._user_topic_type = user_topic_type
-
-    @message_handler
-    async def handle_user_task(self, message: UserTask, ctx: MessageContext) -> None:
-        human_input = input("Human agent input: ")
-        print(f"{'-'*80}\n{self.id.type}:\n{human_input}", flush=True)
-        message.context.append(AssistantMessage(
-            content=human_input, source=self.id.type))
         await self.publish_message(
             AgentResponse(context=message.context,
                           reply_to_topic_type=self._agent_topic_type),
@@ -204,10 +195,10 @@ class UserAgent(RoutedAgent):
 
     @message_handler
     async def handle_user_login(self, message: UserLogin, ctx: MessageContext) -> None:
-        print(f"{'-'*80}\nUser login, session ID: {self.id.key}.", flush=True)
+        print(f"{'-'*80}\n{yellow}User login, session ID: {self.id.key}.{reset}", flush=True)
         # Get the user's initial input after login.
-        user_input = input("User: ")
-        print(f"{'-'*80}\n{self.id.type}:\n{user_input}")
+        user_input = input(f"{yellow}User: {reset}")
+        # print(f"{'-'*80}\n{self.id.type}:\n{user_input}")
         await self.publish_message(
             UserTask(context=[UserMessage(content=user_input, source="User")]),
             topic_id=TopicId(self._agent_topic_type, source=self.id.key),
@@ -216,8 +207,10 @@ class UserAgent(RoutedAgent):
     @message_handler
     async def handle_task_result(self, message: AgentResponse, ctx: MessageContext) -> None:
         # Get the user's input after receiving a response from an agent.
-        user_input = input("User (type 'exit' to close the session): ")
-        print(f"{'-'*80}\n{self.id.type}:\n{user_input}", flush=True)
+        last_agent_message = message.context[-1].content
+        print(f"{dark_yellow}{last_agent_message}{reset}", flush=True)
+        user_input = input(f"{yellow}User (type 'exit' to close the session): {reset}")
+        # print(f"{'-'*80}\n{self.id.type}:\n{user_input}", flush=True)
         if user_input.strip().lower() == "exit":
             print(f"{'-'*80}\nUser session ended, session ID: {self.id.key}.")
             return
@@ -348,7 +341,6 @@ async def main():
         factory=lambda: UserAgent(
             description="A user agent.",
             user_topic_type=user_topic_type,
-            # Start with the triage agent.
             agent_topic_type=triage_agent_topic_type,
         ),
     )
