@@ -11,6 +11,8 @@ def openai_endpoint():
 
 def openai_key():
     return _get_required_env("AZURE_OPENAI_KEY")
+def openai_key_if_set():
+    return os.getenv("AZURE_OPENAI_KEY", None)
 
 def openai_model_name():
     return _get_required_env("AZURE_OPENAI_MODEL_NAME")

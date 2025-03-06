@@ -203,13 +203,15 @@ class MealsPlugin:
         """Sets the time by which the meal should be ready"""
         _logger.debug(f"Time to be ready set to {time}.")
         if isinstance(time, str):
-            try :
+            try:
                 # Parse "18:00"
-                time = datetime.datetime.strptime(time, "%H:%M")
+                time = datetime.datetime.strptime(time, "%H:%M").time()
+                time = datetime.datetime.combine(datetime.datetime.now().date(), time)
             except ValueError:
                 try:
                     # Parse "18:00:00"
-                    time = datetime.datetime.strptime(time, "%H:%M:%S")
+                    time = datetime.datetime.strptime(time, "%H:%M:%S").time()
+                    time = datetime.datetime.combine(datetime.datetime.now().date(), time)
                 except ValueError:
                     try:
                         # Parse "2022-12-31T18:00:00Z"
