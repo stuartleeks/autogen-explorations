@@ -20,6 +20,7 @@ async def Console2(stream: AsyncGenerator[AgentEvent | ChatMessage | T, None]) -
             last_processed = message
             continue
         # print(f"!! {message}")
+        # print(f"!! {message.model_dump_json(indent=2)}")
         if message.source == "user": # skip user messages -- assume these are already displayed
             continue
         if isinstance(message, TextMessage):

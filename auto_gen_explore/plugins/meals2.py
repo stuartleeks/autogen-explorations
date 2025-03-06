@@ -171,69 +171,123 @@ class MealsPlugin:
         return preparation_steps
 
 
-    #
-    # Ready time functions
-    #
+    # #
+    # # Ready time functions
+    # #
 
-    # @kernel_function(
-    #     name="set_time_to_be_ready",
-    #     description="Sets the time by which the meal should be ready",
-    #     # description="Sets the time by which the meal should be ready - specify as yyyy-mm-ddThh:mm",
-    # )
+    # # @kernel_function(
+    # #     name="set_time_to_be_ready",
+    # #     description="Sets the time by which the meal should be ready",
+    # #     # description="Sets the time by which the meal should be ready - specify as yyyy-mm-ddThh:mm",
+    # # )
+    # # def set_time_to_be_ready(
+    # #     self,
+    # #     time: str,
+    # # ) -> str:
+    # #     """Sets the time by which the meal should be ready"""
+    # #     _logger.debug(f"Time to be ready set to {time}.")
+    # #     try:
+    # #         # Parse "2022-12-31T18:00:00Z"
+    # #         time = datetime.datetime.fromisoformat(time)
+    # #     except ValueError:
+    # #         # Parse "2022-12-31T18:00"
+    # #         time = datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M")
+                
+    # #     self.time_to_be_ready = time
+    # #     return f"Time to be ready set to {time}."
+
     # def set_time_to_be_ready(
     #     self,
-    #     time: str,
+    #     time: str | datetime.datetime,
     # ) -> str:
     #     """Sets the time by which the meal should be ready"""
     #     _logger.debug(f"Time to be ready set to {time}.")
-    #     try:
-    #         # Parse "2022-12-31T18:00:00Z"
-    #         time = datetime.datetime.fromisoformat(time)
-    #     except ValueError:
-    #         # Parse "2022-12-31T18:00"
-    #         time = datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M")
+    #     if isinstance(time, str):
+    #         try:
+    #             # Parse "18:00"
+    #             time = datetime.datetime.strptime(time, "%H:%M").time()
+    #             now = datetime.datetime.now()
+    #             time = datetime.datetime.combine(now.date(), time)
+    #         except ValueError:
+    #             try:
+    #                 # Parse "18:00:00"
+    #                 time = datetime.datetime.strptime(time, "%H:%M:%S").time()
+    #                 now = datetime.datetime.now()
+    #                 time = datetime.datetime.combine(now.date(), time)
+    #             except ValueError:
+    #                 try:
+    #                     # Parse "2022-12-31T18:00:00Z"
+    #                     time = datetime.datetime.fromisoformat(time)
+    #                 except ValueError:
+    #                     try:
+    #                         # Parse "2022-12-31T18:00"
+    #                         time = datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M")
+    #                     except ValueError:
+    #                         return f"Time format not recognized: try '17:00', '17:00:00', '2022-12-31T17:00:00Z', or '2022-12-31T17:00'."
                 
     #     self.time_to_be_ready = time
     #     return f"Time to be ready set to {time}."
 
-    def set_time_to_be_ready(
+    # def get_time_to_be_ready(
+    #     self,
+    # ) -> datetime.datetime:
+    #     """Gets the time by which the meal should be ready"""
+    #     _logger.debug(f"Time to be ready: {self.time_to_be_ready}")
+    #     return self.time_to_be_ready
+
+
+
+
+
+    def get_meal_steps(
         self,
-        time: str | datetime.datetime,
-    ) -> str:
-        """Sets the time by which the meal should be ready"""
-        _logger.debug(f"Time to be ready set to {time}.")
-        if isinstance(time, str):
+        ready_time: str,
+    ) -> list[PreparationStep]:
+        """Gets the instructions for the meal listing the steps for all the dishes to be ready for the desired time"""
+        _logger.debug(f"get_meal steps - starting (ready_time:{ready_time})...")
+
+        if isinstance(ready_time, str):
             try:
                 # Parse "18:00"
-                time = datetime.datetime.strptime(time, "%H:%M").time()
+                ready_time = datetime.datetime.strptime(ready_time, "%H:%M").time()
                 now = datetime.datetime.now()
-                time = datetime.datetime.combine(now.date(), time)
+                ready_time = datetime.datetime.combine(now.date(), ready_time)
             except ValueError:
                 try:
                     # Parse "18:00:00"
-                    time = datetime.datetime.strptime(time, "%H:%M:%S").time()
+                    ready_time = datetime.datetime.strptime(ready_time, "%H:%M:%S").time()
                     now = datetime.datetime.now()
-                    time = datetime.datetime.combine(now.date(), time)
+                    ready_time = datetime.datetime.combine(now.date(), ready_time)
                 except ValueError:
                     try:
                         # Parse "2022-12-31T18:00:00Z"
-                        time = datetime.datetime.fromisoformat(time)
+                        ready_time = datetime.datetime.fromisoformat(ready_time)
                     except ValueError:
                         try:
                             # Parse "2022-12-31T18:00"
-                            time = datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M")
+                            ready_time = datetime.datetime.strptime(ready_time, "%Y-%m-%dT%H:%M")
                         except ValueError:
                             return f"Time format not recognized: try '17:00', '17:00:00', '2022-12-31T17:00:00Z', or '2022-12-31T17:00'."
-                
-        self.time_to_be_ready = time
-        return f"Time to be ready set to {time}."
-
-    def get_time_to_be_ready(
-        self,
-    ) -> datetime.datetime:
-        """Gets the time by which the meal should be ready"""
-        _logger.debug(f"Time to be ready: {self.time_to_be_ready}")
-        return self.time_to_be_ready
+                        
+        preparation_steps = []
+        for dish in self.dishes:
+            lower_name = dish.name.lower()
+            dish_instruction = self.dish_instructions[lower_name]
+            steps = dish_instruction.steps_frozen if dish.frozen else dish_instruction.steps
+            step_end_time = ready_time
+            for step in reversed(steps):
+                step_end_time = step_end_time - \
+                    datetime.timedelta(minutes=step.duration_minutes)
+                preparation_steps.append(
+                    PreparationStep(
+                        dish_name=dish.name,
+                        start_time=step_end_time,
+                        description=step.description
+                    )
+                )
+        preparation_steps.sort(key=lambda x: x.start_time)
+        _logger.debug(f"get_meal steps - result: {preparation_steps}")
+        return preparation_steps
 
 
     # @kernel_function(

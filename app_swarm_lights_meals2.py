@@ -43,9 +43,9 @@ async def run_team_stream() -> None:
             return
 
         task_result=await Console2(
-            # agent_session.run(user_message)
-            agent_session.run(user_input=HandoffMessage(
-                source="user", target=last_message.source, content=user_message))
+            agent_session.run(user_message)
+            # agent_session.run(user_input=HandoffMessage(
+                # source="user", target=last_message.source, content=user_message))
         )
         # last_message=task_result.messages[-1]
 

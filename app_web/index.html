@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Demo app</title>
+	<link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+	<h1>Demo app</h1>
+	<div class="session">
+		<span>Session:</span>
+		<span id="session-id">loading...</span>
+	</div>
+	<div class="layout">
+		<div class="user">
+			<div class="output">
+				<textarea name="user-output" id="user-output"  readonly></textarea>
+			</div>
+			<div class="input">
+				<input type="text" name="user-input" id="user-input" />
+				<button id="submit" disabled>Send</button>
+			</div>
+		</div>
+		<div class="logs">
+			<textarea name="logs" id="logs" readonly></textarea>
+		</div>
+	</div>
+	<script src="/js/index.js"></script>
+</body>
+
+</html>
