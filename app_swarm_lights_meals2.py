@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 
-from autogen_agentchat.messages import HandoffMessage
 
 from auto_gen_explore import config
 from auto_gen_explore.app_web.session import AgentSession

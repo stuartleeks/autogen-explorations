@@ -1,19 +1,14 @@
 import asyncio
-import json
 import logging
-import uuid
-from autogen_ext.models.openai import (AzureOpenAIChatCompletionClient,
-                                       OpenAIChatCompletionClient)
+from autogen_ext.models.openai import (AzureOpenAIChatCompletionClient)
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from typing import Any, Dict, List
 
 from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.conditions import HandoffTermination, TextMentionTermination
-from autogen_agentchat.messages import HandoffMessage
+from autogen_agentchat.conditions import TextMentionTermination
 from autogen_agentchat.teams import Swarm
 from autogen_agentchat.ui import Console
-from autogen_ext.models.openai import OpenAIChatCompletionClient
 from auto_gen_explore import config
 
 ##https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit

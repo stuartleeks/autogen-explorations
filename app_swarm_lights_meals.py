@@ -1,20 +1,16 @@
 import asyncio
-import json
 import logging
-import uuid
-from autogen_ext.models.openai import (AzureOpenAIChatCompletionClient,
-                                       OpenAIChatCompletionClient)
+from autogen_ext.models.openai import (AzureOpenAIChatCompletionClient)
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
-from typing import Any, Dict, List, Sequence
+from typing import Sequence
 
-from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
-from autogen_agentchat.conditions import HandoffTermination, TextMentionTermination
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.conditions import HandoffTermination
 from autogen_agentchat.base import TerminationCondition, TerminatedException
 from autogen_agentchat.messages import HandoffMessage, AgentEvent, ChatMessage, StopMessage, TextMessage
 from autogen_agentchat.teams import Swarm
 from autogen_agentchat.ui import Console
-from autogen_ext.models.openai import OpenAIChatCompletionClient
 from auto_gen_explore import config
 from auto_gen_explore.plugins.lights import LightsPlugin
 from auto_gen_explore.plugins.meals import MealsPlugin

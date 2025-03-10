@@ -1,6 +1,4 @@
 import asyncio
-import logging
-from typing import Sequence
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
@@ -8,15 +6,12 @@ from auto_gen_explore import config
 
 
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
-from autogen_core.model_context import BufferedChatCompletionContext
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 
-from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
-from autogen_agentchat.messages import AgentEvent, ChatMessage
+from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_agentchat.ui import Console
-from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.base import TaskResult
 from autogen_core import CancellationToken
 

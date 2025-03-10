@@ -8,7 +8,6 @@ from auto_gen_explore import config
 
 
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
-from autogen_core.model_context import BufferedChatCompletionContext
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 

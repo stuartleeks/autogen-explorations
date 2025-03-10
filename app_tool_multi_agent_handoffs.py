@@ -2,24 +2,14 @@ import asyncio
 import json
 import logging
 import uuid
-from typing import List, Sequence, Tuple
+from typing import List, Tuple
 
-from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.conditions import (MaxMessageTermination,
-                                          TextMentionTermination)
-from autogen_agentchat.messages import AgentEvent, ChatMessage
-from autogen_agentchat.teams import SelectorGroupChat
-from autogen_agentchat.ui import Console
-from autogen_core.model_context import BufferedChatCompletionContext
 from autogen_core.tools import FunctionTool, Tool
-from autogen_ext.models.openai import (AzureOpenAIChatCompletionClient,
-                                       OpenAIChatCompletionClient)
+from autogen_ext.models.openai import (AzureOpenAIChatCompletionClient)
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from pydantic import BaseModel
 
 from auto_gen_explore import config
-from auto_gen_explore.plugins.lights import LightsPlugin
-from auto_gen_explore.plugins.meals import MealsPlugin
 
 from autogen_core import (FunctionCall, MessageContext, RoutedAgent,
                           SingleThreadedAgentRuntime, TopicId,

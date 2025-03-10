@@ -1,6 +1,4 @@
 import asyncio
-import logging
-from typing import Sequence
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
@@ -13,9 +11,6 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 
 from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
-from autogen_agentchat.messages import AgentEvent, ChatMessage
-from autogen_agentchat.teams import SelectorGroupChat
 from autogen_agentchat.ui import Console
 
 from auto_gen_explore.plugins.lights import LightsPlugin
