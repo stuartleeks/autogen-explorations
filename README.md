@@ -17,8 +17,7 @@ eval $(poetry env activate)
 
 ```bash
 # compile ts
-cd app_web/ts
-tsc # or tsc --watch
+(cd app_web/ts && tsc --watch)
 
 # compile scss
 cd app_web/scss

@@ -4,3 +4,8 @@ __pycache__
 
 app_web/js/
 app_web/css/
+.app_web_state/
+
+
+.swarm_state.json
+.team_state.json

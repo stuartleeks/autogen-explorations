@@ -1,3 +1,5 @@
+import json
+import logging
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
@@ -14,6 +16,8 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from auto_gen_explore import config
 from auto_gen_explore.plugins.lights import LightsPlugin
 from auto_gen_explore.plugins.meals2 import MealsPlugin
+
+_logger = logging.getLogger(__name__)
 
 # Create the token provider
 api_key = config.openai_key_if_set()
@@ -50,11 +54,6 @@ class AgentTextMessageTermination(TerminationCondition):
                 "Termination condition has already been reached")
         if len(messages) == 0:
             return None
-        # # print(f"{yellow}!!!messages {messages} {reset}")
-        # print(f"{yellow}!!!messages-start")
-        # for message in messages:
-        #     print(f"  {message}")
-        # print(f"{yellow}!!!messages-end {reset}")
 
         # Stop on first text message not from user
         # May want to change this to stop on first message that isn't handoff or function call etc
@@ -69,15 +68,15 @@ class AgentTextMessageTermination(TerminationCondition):
 
 
 class AgentSession:
+
     def __init__(self, id):
         self.id = id
 
-        # TODO - need to handle persisting the light/meals state, swarm sate
         lights_plugin = LightsPlugin()
         self._lights_plugin = lights_plugin
         meals_plugin = MealsPlugin()
         self._meals_plugin = meals_plugin
-        self._last_message = None
+        self._messages = [] # TODO - is there a way to access this from the agents without storing separately?
 
         triage_agent = AssistantAgent(
             "triage_agent",
@@ -111,7 +110,8 @@ class AgentSession:
         meals_agent = AssistantAgent(
             "meals_agent",
             model_client=model_client,
-            tools=[meals_plugin.add_meal, meals_plugin.get_dish_options, meals_plugin.get_dishes, meals_plugin.get_meal_steps, meals_plugin.remove_dish],
+            tools=[meals_plugin.add_meal, meals_plugin.get_dish_options,
+                   meals_plugin.get_dishes, meals_plugin.get_meal_steps, meals_plugin.remove_dish],
             system_message="You are a an agent that can provide information about dishes for meals."
             "Use tools to add dishes to meals, remove dishes from meals and show the steps for preparing a meal."
             "Do NOT make up ingredients or steps. Only use the ones provided by tools."
@@ -134,15 +134,47 @@ class AgentSession:
             termination_condition=termination,
         )
 
+    def _get_last_message(self):
+        """Return the last message that isn't a TaskResult"""
+        if len(self._messages) == 0:
+            return None
+        if self._messages[-1]["type"] != "TaskResult":
+            return self._messages[-1]
+        if len(self._messages) >= 2:
+            return self._messages[-2]
+
     async def run(self, user_input: str):
-        if self._last_message and self._last_message.messages and len(self._last_message.messages) > 0:
-            # TODO logger
-            target = self._last_message.messages[-1].source
+        last_message = self._get_last_message()
+        if last_message is not None and "source" in last_message:
+            target = last_message["source"]
             user_input = HandoffMessage(
                 source="user", target=target, content=user_input)
+            _logger.debug(f"Session {self.id} - Got last message, hand off to {target}")
+        else:
+            _logger.debug(f"Session {self.id} - No last message, using user input")
 
-        last_message: TaskResult | Response | None = None
         async for message in self._team.run_stream(task=user_input):
             if isinstance(message, TaskResult) or isinstance(message, Response):
-                self._last_message = message
+                self._messages.append({"type": "TaskResult"})
+            else:
+                self._messages.append(message.model_dump(mode="json"))
             yield message
+
+    async def save_state(self):
+        team_state = await self._team.save_state() if self._team._initialized else None
+        lights_state = self._lights_plugin.save_state()
+        meals_state = self._meals_plugin.save_state()
+        return {
+            "team": team_state,
+            "messages": self._messages,
+            "lights": lights_state,
+            "meals": meals_state,
+        }
+
+    async def load_state(self, state: dict):
+        if "team" in state and state["team"]:
+            await self._team.load_state(state["team"])
+
+        self._messages = state["messages"]
+        self._lights_plugin.load_state(state["lights"])
+        self._meals_plugin.load_state(state["meals"])

@@ -20,6 +20,12 @@ if (!logsElement) {
 	throw new Error('Could not find an element with the id "logs"');
 }
 
+const statusElement = document.getElementById('status') as HTMLTextAreaElement;
+if (!statusElement) {
+	throw new Error('Could not find an element with the id "status"');
+}
+
+
 // submitButtonElement.addEventListener('click', () => {
 // 	const input = inputElement.value ?? "";
 // 	console.log(inputElement);
@@ -44,10 +50,13 @@ async function getOrCreateSessionId() {
 	const sessionId = await getOrCreateSessionId();
 	sessionIdElement.innerText = sessionId;
 
-	// const resp = await fetch(`/api/sessions/${sessionId}`);
-	// const body = await resp.json();
+	createWebSocket(sessionId);
 
-	// create websocket connection to /api/sessions/:id/ws
+})();
+
+function createWebSocket(sessionId: any) {
+	statusElement.innerText = "Connecting...";
+	console.log("Connecting to WebSocket", sessionId);
 	const ws = new WebSocket(`ws://${window.location.host}/api/sessions/${sessionId}`);
 	ws.onmessage = (event) => {
 		const message = JSON.parse(event.data);
@@ -67,26 +76,44 @@ async function getOrCreateSessionId() {
 				outputElement.textContent += '\n';
 			}
 			outputElement.textContent += `${source}: ${message.content}\n`;
-		} else if(message.type === "TaskResult") {
+
+			outputElement.scrollTop = outputElement.scrollHeight;
+
+		} else if (message.type === "TaskResult") {
 			submitButtonElement.disabled = false;
 		}
+	};
+	ws.onclose = (event) => {
+		console.log("WebSocket closed", event);
+		resetOutput = true;
+		outputElement.textContent += '\nconnection closed, retrying...\n';
+
+		inputElement.removeEventListener('keydown', inputKeyDownHandler);
+		submitButtonElement.removeEventListener('click', submitClickHandler);
+		submitButtonElement.disabled = true;
+		statusElement.innerText = "Disconnected";
+
+		createWebSocket(sessionId);
 	}
-	console.log("enable!")
+
 	submitButtonElement.disabled = false;
 	inputElement.focus();
+	inputElement.addEventListener('keydown', inputKeyDownHandler);
 
-	inputElement.addEventListener('keydown', (event) => {
-		if (event.key === 'Enter') {
+	submitButtonElement.addEventListener('click', submitClickHandler);
+	statusElement.innerText = "Ready";
+
+
+	function inputKeyDownHandler(ev: KeyboardEvent) {
+		if (ev.key === 'Enter') {
 			submitButtonElement.click();
 		}
-	});
-	submitButtonElement.addEventListener('click', () => {
+	}
+	function submitClickHandler() {
 		const input = inputElement.value ?? "";
 		console.log("sending", input);
-		ws.send(JSON.stringify({ content: input}));
+		ws.send(JSON.stringify({ content: input }));
 		inputElement.value = '';
 		submitButtonElement.disabled = true;
-	});
-
-	
-})();
+	}
+}

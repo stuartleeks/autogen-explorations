@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 
 from autogen_agentchat.messages import HandoffMessage
@@ -38,6 +39,14 @@ async def run_team_stream() -> None:
 
     # while isinstance(last_message, HandoffMessage) and last_message.target == "user": # use this normally (i.e. not using AgentTextMessageTermination)
     while True: # use this if using AgentTextMessageTermination
+        state = await agent_session.save_state()
+        # print()
+        # print()
+        # print(state)
+        # print()
+        with open(f".swarm_state.json", "w") as f:
+            json.dump(state, f)
+
         user_message=input(f"{yellow}User (type 'exit' to close the session): {reset}")
         if user_message.strip().lower() == "exit":
             return
@@ -48,6 +57,7 @@ async def run_team_stream() -> None:
                 # source="user", target=last_message.source, content=user_message))
         )
         # last_message=task_result.messages[-1]
+
 
 
 # Use asyncio.run(...) if you are running this in a script.

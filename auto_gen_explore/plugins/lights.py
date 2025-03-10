@@ -32,3 +32,9 @@ class LightsPlugin:
                     light["is_on"] = is_on
                 return light
         return None
+    
+    def save_state(self):
+        return self._lights
+    
+    def load_state(self, state):
+        self._lights = state
