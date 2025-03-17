@@ -41,6 +41,9 @@ def semantic_kernel_log_level():
 def agent_log_level():
     return os.getenv("AGENT_LOG_LEVEL", "DEBUG")
 
+def aca_dynamic_sessions_pool_endpoint():
+    return _get_required_env("ACA_DS_POOL_ENDPOINT")
+
 def _get_required_env(env_var):
     value = os.getenv(env_var)
     if value is None:

@@ -5,6 +5,8 @@ from typing import Annotated
 
 _logger = logging.getLogger(__name__)
 
+# alternative version of MealsPlugin that requires the meal time to be passed in to get_meal_steps
+# instead of using the get_time_to_be_ready and set_time_to_be_ready methods
 
 @dataclass
 class DishInstructionStep:
