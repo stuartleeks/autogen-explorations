@@ -180,9 +180,47 @@ print(foo)
         input("Press Enter to continue...")
 
 
+async def main6():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        print(f"Using work_dir: {temp_dir}")
+
+        executor = ACADynamicSessionsCodeExecutor(
+            pool_management_endpoint=POOL_MANAGEMENT_ENDPOINT, credential=DefaultAzureCredential(), work_dir=temp_dir
+        )
+        batches_path = os.path.join(os.path.dirname(__file__), "batches.csv")
+        await executor.upload_files([batches_path], cancellation_token=cancellation_token)
+
+        code_blocks = [
+            CodeBlock(code='import pandas as pd\nimport matplotlib.pyplot as plt\n\n# Load the data from the file\nbatches_df = pd.read_csv(\'batches.csv\')\n\n# Create a dictionary to cache manufacturing times\nmanufacturing_time_cache = {}\n\n# Function to calculate the manufacturing time for a batch\ndef calculate_manufacturing_time(batch_id):\n    if batch_id in manufacturing_time_cache:\n        return manufacturing_time_cache[batch_id]\n    \n    batch = batches_df[batches_df[\'id\'] == batch_id].iloc[0]\n    source_batches = str(batch[\'source_batches\'])\n    \n    if pd.isna(source_batches) or source_batches.strip() == \'\':\n        total_time = batch[\'time\']\n    else:\n        source_batch_ids = [int(x) for x in source_batches.split(\',\') if x.strip().isdigit()]\n        total_time = batch[\'time\'] + sum(calculate_manufacturing_time(src_id) for src_id in source_batch_ids)\n    \n    manufacturing_time_cache[batch_id] = total_time\n    return total_time\n\n# Calculate manufacturing times for all batches\nbatches_df[\'total_time\'] = batches_df[\'id\'].apply(calculate_manufacturing_time)\n\n# Plot the batches by manufacturing time\nplt.figure(figsize=(10, 6))\nplt.bar(batches_df[\'id\'].astype(str), batches_df[\'total_time\'], color=\'skyblue\')\nplt.xlabel(\'Batch ID\')\nplt.ylabel(\'Manufacturing Time (Days)\')\nplt.title(\'Manufacturing Time for Each Batch\')\nplt.xticks(rotation=45)\nplt.tight_layout()\n\n# Save the plot to a file\nplt.savefig(\'batches_manufacturing_time.png\')\nprint("Plot saved as \'batches_manufacturing_time.png\'")\nprint(os.getcwd())\nprint(os.listdir(os.getcwd()))\n', language="python")]
+        code_result = await executor.execute_code_blocks(code_blocks, cancellation_token)
+        print(f"Executed: {code_result}")
+        input("Press Enter to continue...")
+
+async def main7():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        print(f"Using work_dir: {temp_dir}")
+
+        executor = ACADynamicSessionsCodeExecutor(
+            pool_management_endpoint=POOL_MANAGEMENT_ENDPOINT, credential=DefaultAzureCredential(), work_dir=temp_dir
+        )
+        code_blocks = [
+            CodeBlock(code='with open("output.txt" , "w") as f:\n\tf.write("hello world")\nprint(os.getcwd())\nprint(os.listdir(os.getcwd()))\n', language="python")]
+        code_result = await executor.execute_code_blocks(code_blocks, cancellation_token)
+        print(f"Executed: {code_result}")
+        input("Press Enter to continue...")
+
+
+
+# output current directory
+# print(os.getcwd())
+# list files in current directory
+# print(os.listdir(os.getcwd()))
+
 
 # asyncio.run(main1())
 # asyncio.run(main2())
 # asyncio.run(main3())
-asyncio.run(main4())
+# asyncio.run(main4())
 # asyncio.run(main5())
+# asyncio.run(main6())
+asyncio.run(main7())

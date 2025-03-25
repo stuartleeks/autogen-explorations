@@ -2,10 +2,12 @@
 __pycache__
 
 
-app_web/js/
-app_web/css/
-.app_web_state/
+app_web_lights_meals/js/
+app_web_lights_meals/css/
+.app_web_lights_meals_state/
 
 
 .swarm_state.json
 .team_state.json
+
+temp_dir/

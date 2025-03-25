@@ -1,0 +1,18 @@
+id,description,source_batches,time
+1001,raw wibbles,,1
+1002,raw floofles,,2
+1003,raw thingamajigs,,1.5
+1004,processed wibbles,1001,2
+1005,processed floofles,1002,1.5
+1006,processed thingamajigs,1003,1
+1007,oxidised wibbles,1004,2
+1008,oxidised floofles,1005,1
+1009,oxidised thingamjigs,1006,2
+1010,de-ionised wibbles,1001,1
+1011,de-ionised floofles,1002,1
+1012,de-ionised thingamajigs,1003,1
+1013,whatsits,"1004,1006",2
+1014,doofers,"1006,1008,1012",4
+1015,floffles,"1002,1005,1010,1007",5
+1016,quifflings,"1010,1011,1009",4
+1017,super quifflings,"1016,1011,1012",3

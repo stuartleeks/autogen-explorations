@@ -26,7 +26,7 @@ logging.getLogger("kernel").setLevel(config.semantic_kernel_log_level())
 
 app = FastAPI()
 
-state_folder = os.path.join(os.path.dirname(__file__), "./.app_web_state")
+state_folder = os.path.join(os.path.dirname(__file__), "./.app_web_lights_meals_state")
 
 session_socket_managers: dict[str, "SessionWebSocketManager"] = {}
 
@@ -133,13 +133,13 @@ class SessionWebSocketManager:
             await save_session(session)
 
 
-app.mount("/css", StaticFiles(directory="app_web/css"), name="css")
-app.mount("/js", StaticFiles(directory="app_web/js"), name="js")
+app.mount("/css", StaticFiles(directory="app_web_lights_meals/css"), name="css")
+app.mount("/js", StaticFiles(directory="app_web_lights_meals/js"), name="js")
 
 
 @app.get("/")
 async def read_index():
-    return FileResponse('app_web/index.html')
+    return FileResponse('app_web_lights_meals/index.html')
 
 
 @app.post("/api/sessions")
@@ -169,4 +169,4 @@ async def websocket_endpoint(websocket: WebSocket, id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app_web:app", host="0.0.0.0", port=3000, reload=True)
+    uvicorn.run("app_web_lights_meals_web:app", host="0.0.0.0", port=3000, reload=True)
